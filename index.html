@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMD - Gemadinha</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #0f0;
+            font-family: monospace;
+            margin: 0;
+            padding: 20px;
+        }
+
+        #terminal {
+            width: calc(100% - 120px);
+            max-width: 800px;
+            margin: 0;
+            border: 2px solid #0f0;
+            padding: 10px;
+            box-shadow: 0 0 10px #0f0;
+            float: left;
+        }
+
+        #output {
+            white-space: pre-wrap;
+            overflow-y: auto;
+            max-height: 200px;
+            border-bottom: 2px solid #0f0;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+        }
+
+        .input-line span {
+            margin-right: 10px;
+        }
+
+        input {
+            background-color: #000;
+            color: #0f0;
+            border: none;
+            outline: none;
+            font-family: monospace;
+            font-size: 16px;
+            flex: 1;
+        }
+
+        input::placeholder {
+            color: #0f0;
+            opacity: 0.5;
+        }
+
+        #status-panel {
+            width: 100px;
+            height: 100%;
+            position: absolute;
+            right: 0;
+            top: 0;
+            background-color: #222;
+            color: #0f0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-left: 2px solid #0f0;
+            box-shadow: 0 0 5px #0f0;
+        }
+
+        .status-title {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .status-content {
+            color: #0f0;
+            text-align: center;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            background-color: #222;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 5px 10px;
+            font-family: monospace;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0f0;
+            color: #000;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const terminal = document.getElementById("terminal");
+            const output = document.getElementById("output");
+            const inputField = document.getElementById("input");
+            const terrorAudio = document.getElementById("terror-audio");
+
+            const users = {
+                gemadinha: {
+                    password: "1234",
+                    color: "#0f0",
+                    introduction: `Bem-vindo ao sistema, gemadinha! Digite 'help' para listar os comandos disponíveis.`,
+                    availableCommands: ["help", "clear", "exit", "conversar"],
+                },
+                Konrado: {
+                    password: "konratinho",
+                    color: "#0f0",
+                    introduction: `Bem-vindo ao sistema, Konrado! Digite 'help' para listar os comandos disponíveis.`,
+                    availableCommands: ["help", "clear", "exit", "conversar"],
+                },
+                Roseno: {
+                    password: "Mumuel",
+                    color: "#0f0",
+                    introduction: `Bem-vindo ao sistema, Roseno! Digite 'help' para listar os comandos disponíveis.`,
+                    availableCommands: ["help", "clear", "exit", "conversar"],
+                },
+                Samuel: {
+                    password: "Samfogo",
+                    color: "#0f0",
+                    introduction: `Bem-vindo ao sistema, Samuel! Digite 'help' para listar os comandos disponíveis.`,
+                    availableCommands: ["help", "clear", "exit", "conversar"],
+                },
+                Tomé: {
+                    password: "Ginásio",
+                    color: "#0f0",
+                    introduction: `Bem-vindo ao sistema, Tomé! Digite 'help' para listar os comandos disponíveis.`,
+                    availableCommands: ["help", "clear", "exit", "conversar"],
+                },
+                Adriel: {
+                    password: "Pepino",
+                    color: "#0f0",
+                    introduction: `Bem-vindo ao sistema, Adriel! Digite 'help' para listar os comandos disponíveis.`,
+                    availableCommands: ["help", "clear", "exit", "conversar"],
+                },
+                Breno: {
+                    password: "chocomenta",
+                    color: "#800080", // Roxo
+                    introduction: `Bem-vindo ao sistema, Breno! Digite 'help' para conhecer os comandos.`,
+                    availableCommands: ["help", "clear", "exit", "desculpa", "sorumbatico", "poder", "removed_content"],
+                }
+            };
+
+            let currentUser = null;
+            let step = 0; // 0: Aguardando nome de usuário, 1: Aguardando senha, 2: Logado
+            let conversaIniciada = false;
+
+            function printToTerminal(text) {
+                output.textContent += text + "\n";
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+
+            function resetLogin() {
+                currentUser = null;
+                step = 0;
+                conversaIniciada = false;
+                printToTerminal(`Bem-vindo! Digite seu nome de usuário:`);
+                inputField.style.display = "block";
+            }
+
+            function aplicarTema(cor) {
+                document.body.style.color = cor;
+                document.querySelectorAll("#terminal, #status-panel").forEach(el => {
+                    el.style.borderColor = cor;
+                    el.style.boxShadow = `0 0 10px ${cor}`;
+                });
+                document.querySelector("input").style.color = cor;
+                document.querySelector("#status-panel .status-content").style.color = cor;
+            }
+
+            function tocarSom(audio) {
+                audio.play();
+                setTimeout(() => {
+                    audio.pause();
+                    location.reload(); // Reiniciar página após o som
+                }, 1000); // Som dura 1 segundo e reinicia a página
+            }
+
+            inputField.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    const inputValue = inputField.value.trim(); // Não convertemos mais para minúsculas
+                    inputField.value = "";
+
+                    if (step === 0) {
+                        // Normaliza o login para minúsculas, mas mantém a senha como case-sensitive
+                        const normalizedUsers = Object.keys(users).reduce((acc, key) => {
+                            acc[key.toLowerCase()] = key;
+                            return acc;
+                        }, {});
+
+                        if (normalizedUsers[inputValue.toLowerCase()]) {
+                            currentUser = normalizedUsers[inputValue.toLowerCase()]; // Recupera o nome de usuário original (respeitando maiúsculas/minúsculas)
+                            printToTerminal(`Usuário aceito. Digite sua senha:`);
+                            step = 1;
+                        } else {
+                            printToTerminal(`Nome de usuário inválido. Tente novamente:`);
+                        }
+                    } else if (step === 1) {
+                        // Verifica a senha exata (sem normalização de maiúsculas/minúsculas)
+                        if (users[currentUser].password === inputValue) {
+                            printToTerminal(users[currentUser].introduction);
+                            aplicarTema(users[currentUser].color);
+                            step = 2;
+                        } else {
+                            printToTerminal(`Senha incorreta. Tente novamente:`);
+                        }
+                    } else if (step === 2) {
+                        printToTerminal(`$ ${inputValue}`);
+
+                        const commands = users[currentUser].availableCommands;
+
+                        if (inputValue === "help") {
+                            printToTerminal(`Comandos disponíveis:\n- ${commands.join("\n- ")}`);
+                        } else if (inputValue === "clear") {
+                            output.textContent = "";
+                        } else if (inputValue === "exit") {
+                            printToTerminal(`Saindo da sessão...`);
+                            resetLogin();
+                        } else if (inputValue === "conversar") {
+                            if (currentUser === "gemadinha" || currentUser === "Konrado" || currentUser === "Roseno" || currentUser === "Samuel" || currentUser === "Tomé" || currentUser === "Adriel") {
+                                printToTerminal(`Não tenha medo, converse com o Servidor!`);
+                                conversaIniciada = true;
+                                inputField.disabled = false;
+
+                                inputField.addEventListener("keydown", (event) => {
+                                    if (event.key === "Enter" && conversaIniciada) {
+                                        printToTerminal("Você não é quem eu procuro.");
+                                        tocarSom(terrorAudio); // Toca o grito e reinicia a página
+                                    }
+                                });
+                            }
+                        } else if (inputValue === "removed_content") {
+                            printToTerminal("https://pastebin.com/pXTrugLD");
+                        } else if (inputValue === "desculpa") {
+                            printToTerminal("Eu nunca vou te desculpar, Breno.");
+                        } else if (inputValue === "sorumbatico") {
+                            printToTerminal("Você achou mesmo que tudo teria a mesma resposta?");
+                            setTimeout(() => location.reload(), 3000); // Reinicia a página após a mensagem
+                        } else if (inputValue === "poder") {
+                            printToTerminal("Você queria de volta o que eu tomei de você, não é?");
+                        } else {
+                            printToTerminal(`Comando não reconhecido. Digite 'help' para ver a lista de comandos.`);
+                        }
+                    }
+                }
+            });
+
+            printToTerminal(`Bem-vindo! Digite seu nome de usuário:`);
+        });
+    </script>
+</head>
+<body>
+    <div id="terminal">
+        <div id="output"></div>
+        <div class="input-line">
+            <span>$</span>
+            <input type="text" id="input" placeholder="Digite aqui..." autofocus>
+        </div>
+    </div>
+
+    <div id="status-panel">
+        <div class="status-title">Status do Servidor:</div>
+        <div class="status-content">Desconhecido</div>
+    </div>
+
+    <!-- Áudio para o grito -->
+    <audio id="terror-audio" src="https://www.myinstants.com/media/sounds/scream-1.mp3" preload="auto"></audio>
+</body>
+</html>
